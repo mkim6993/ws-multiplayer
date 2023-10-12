@@ -1,0 +1,15 @@
+#gameboard {
+    background-color: rgb(225, 225, 225);
+    width: 900px;
+    height: 500px;
+    border: 2px solid gray;
+}
+
+#GameEnvironment {
+    background-color: rgb(180, 170, 236);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
