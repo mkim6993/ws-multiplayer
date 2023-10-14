@@ -23,17 +23,50 @@ app.use(function(req, res, next) {
     next();
 })
 
+// Game Board
+const players = {}
+
+const gameBoard = new Array(140);
+for (let i = 0; i < 140; i++) {
+    const row = [];
+    for (let j = 0; j < 290; j++) {
+        row.push("*");
+    }
+    gameBoard.push(row);
+}
+let socketConnections = {};
+
+io.on("connection", socket => {
+    console.log(`${socket.id} has connected`);
+
+
+    console.log("socket.io connection successful");
+    socket.on("join-game", playerData => {
+        let username = playerData.username;
+        let x = playerData.x;
+        let y = playerData.y;
+        console.log("x:", x, ", y:", y);
+        console.log("socketid:", socket.id);
+        socketConnections[socket.id] = username;
+        players[username].push(x);
+        players[username].push(y); 
+        gameBoard[x][y] = socket.id; 
+        
+        console.log("player placed on gameboard");
+        console.log(username, ":", gameBoard[x][y]);
+        console.log("players:", players)
+        console.log("socketConnections:", socketConnections)
+    });
+
+    socket.on("disconnect", () => {
+        // socketConnections = socketConnections.filter((sID) => sID.id !== socket.id);
+    })
+});
 
 app.post('/playerInfo', (req, res) => {
     const { username } = req.body;
+    players[username] = [];
     res.sendStatus(200);
-})
-
-// Game Board
-
-
-io.on("connection", socket => {
-    console.log("socket.io connection successful");
 })
 
 const PORT = 8000;
