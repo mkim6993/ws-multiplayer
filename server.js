@@ -43,7 +43,7 @@ for (let i = 0; i < 141; i++) {
     gameBoard.push(row);
 }
 const socketConnections = {};   // { socketID: username }
-const players = {}  // { socketID: [x, y] }
+const players = {}  // { socketID: [x, y, color, username] }
 
 /**
  * Socket.io event listeners
@@ -60,14 +60,18 @@ io.on("connection", socket => {
         let username = playerData.username;
         let x = playerData.x;
         let y = playerData.y;
+        let color = playerData.color;
+        let id = socket.id;
 
         // ------------- DEBUG -------------
         // console.log("x:", x, ", y:", y);
         // ---------------------------------
         
-        socketConnections[socket.id] = username;
-        players[socket.id] = [x];
-        players[socket.id].push(y); 
+        socketConnections[id] = username;
+        players[id] = [x];
+        players[id].push(y); 
+        players[id].push(color);
+        players[id].push(username);
         gameBoard[y][x] = socket.id;
 
         // ------------- DEBUG -------------
@@ -75,18 +79,41 @@ io.on("connection", socket => {
         console.log("socketConnections:", socketConnections)
         // ---------------------------------
 
+        // send other players' states to new player
+        if (Object.entries(players).length > 1) {
+            const otherPlayers = [];
+            for (let key in players) {
+                if (key !== id) {
+                    otherPlayers.push([key, ...players[key]]);
+                }
+            }
+            console.log("sending other player info to new player:", otherPlayers)
+            socket.emit("initial-other-players-data", otherPlayers);
 
-        // need to send other players' states to new player
-
-        // need to send new player's state to other players
+            // send new player's state to other players
+            let newPlayerData = {
+                id: socket.id,
+                username: username,
+                x: x,
+                y: y,
+                color: color,
+            }
+            socket.broadcast.emit("new-player-data", newPlayerData);
+        }
     });
 
     /**
      * Records a player's change in movement to 'players' hashmap { socketID:[x, y] }
      */
     socket.on("update-position", newCoordinate => {
-        players[socket.id][0] = newCoordinate.x;
-        players[socket.id][1] = newCoordinate.y;
+        let id = socket.id;
+        let prevX = players[id][0];
+        let prevY = players[id][1];
+        gameBoard[prevY][prevX] = "*";
+        
+        players[id][0] = newCoordinate.x;
+        players[id][1] = newCoordinate.y;
+        gameBoard[newCoordinate.y][newCoordinate.x] = id;
         console.log("new player position: [" + newCoordinate.x + ", " + newCoordinate.y + "]");
         socket.emit("update-client-position", newCoordinate);
     });
