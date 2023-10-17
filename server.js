@@ -2,8 +2,13 @@ const express = require("express");
 const http = require("http");
 const app = express();
 const server = http.createServer(app);
-
 const { Server } = require("socket.io");
+
+/**
+ * Configure CORS policy by...
+ * - configuring CORS through Socket.io 4.0^ 
+ * - setting Access-Control-Allow-Headers
+ */
 const io = new Server(server, {
     cors: {
         origin: "http://localhost:3000"
@@ -23,49 +28,76 @@ app.use(function(req, res, next) {
     next();
 })
 
-// Game Board
-const players = {}
-
-const gameBoard = new Array(140);
-for (let i = 0; i < 140; i++) {
+/**
+ * Create GameBoard with...
+ * - initial state
+ * - record of socket connections
+ * - record of players with their positions
+ */
+const gameBoard = [];
+for (let i = 0; i < 141; i++) {
     const row = [];
-    for (let j = 0; j < 290; j++) {
+    for (let j = 0; j < 291; j++) {
         row.push("*");
     }
     gameBoard.push(row);
 }
-let socketConnections = {};
+const socketConnections = {};   // { socketID: username }
+const players = {}  // { socketID: [x, y] }
 
+/**
+ * Socket.io event listeners
+ */
 io.on("connection", socket => {
     console.log(`${socket.id} has connected`);
 
-
-    console.log("socket.io connection successful");
+    /**
+     * Once a client connects, they emit an initial "join-game" event
+     * - save player's socketConnection in 'socketConnections'
+     * - save player's initial position in 'players'
+     */
     socket.on("join-game", playerData => {
         let username = playerData.username;
         let x = playerData.x;
         let y = playerData.y;
-        console.log("x:", x, ", y:", y);
-        console.log("socketid:", socket.id);
-        socketConnections[socket.id] = username;
-        players[username].push(x);
-        players[username].push(y); 
-        gameBoard[x][y] = socket.id; 
+
+        // ------------- DEBUG -------------
+        // console.log("x:", x, ", y:", y);
+        // ---------------------------------
         
-        console.log("player placed on gameboard");
-        console.log(username, ":", gameBoard[x][y]);
+        socketConnections[socket.id] = username;
+        players[socket.id] = [x];
+        players[socket.id].push(y); 
+        gameBoard[y][x] = socket.id;
+
+        // ------------- DEBUG -------------
         console.log("players:", players)
         console.log("socketConnections:", socketConnections)
+        // ---------------------------------
+
+
+        // need to send other players' states to new player
+
+        // need to send new player's state to other players
+    });
+
+    /**
+     * Records a player's change in movement to 'players' hashmap { socketID:[x, y] }
+     */
+    socket.on("update-position", newCoordinate => {
+        players[socket.id][0] = newCoordinate.x;
+        players[socket.id][1] = newCoordinate.y;
+        console.log("new player position: [" + newCoordinate.x + ", " + newCoordinate.y + "]");
+        socket.emit("update-client-position", newCoordinate);
     });
 
     socket.on("disconnect", () => {
         // socketConnections = socketConnections.filter((sID) => sID.id !== socket.id);
-    })
+    });
 });
 
+
 app.post('/playerInfo', (req, res) => {
-    const { username } = req.body;
-    players[username] = [];
     res.sendStatus(200);
 })
 

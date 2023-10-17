@@ -15,6 +15,8 @@ const GameEnv = () => {
     const Player = useRef({
         x: Math.floor(Math.random()*290),
         y: Math.floor(Math.random()*140),
+        // x: 290,
+        // y: 140,
         speed: 1,
         width: 10,
         height: 10,
@@ -27,53 +29,62 @@ const GameEnv = () => {
         down: false,
     }
 
-    function updatePlayerMovement() {
+    /**
+     * updates player movement values and sends coordinates to game state
+     */
+    function updatePlayerMovement(x, y) {
         let speed = Player.current.speed;
         if (playerMovement.left && playerMovement.up) {
-            Player.current.x -= speed;
-            Player.current.y -= speed;
+            x -= speed;
+            y -= speed;
           }
         if (playerMovement.left && playerMovement.down) {
-            Player.current.x -= speed;
-            Player.current.y += speed;
+            x -= speed;
+            y += speed;
         }
         if (playerMovement.right && playerMovement.up) {
-            Player.current.x += speed;
-            Player.current.y -= speed;
+            x += speed;
+            y -= speed;
         }
         if (playerMovement.right && playerMovement.down) {
-            Player.current.x += speed;
-            Player.current.y += speed;
+            x += speed;
+            y += speed;
         }
         if (playerMovement.left) {
-            Player.current.x -= speed * 2;
+            x -= speed * 2;
         }
         if (playerMovement.right) {
-            Player.current.x += speed * 2;
+            x += speed * 2;
         }
         if (playerMovement.up) {
-            Player.current.y -= speed * 2;
+            y -= speed * 2;
         }
         if (playerMovement.down) {
-            Player.current.y += speed * 2;
+            y += speed * 2;
         }
 
-        Player.current.x = Math.max(0, Math.min(gameBoardCanvas.current.width - Player.current.width, Player.current.x));
-        Player.current.y = Math.max(0, Math.min(gameBoardCanvas.current.height - Player.current.height, Player.current.y));
+        let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - Player.current.width, x));
+        let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - Player.current.height, y));
         
-        sendMovementData()
+        // console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
+        sendMovementData(changeInX, changeInY)
     }
 
-    function sendMovementData() {
+    /**
+     * Send current player position to server game state
+     */
+    function sendMovementData(x, y) {
         const movementData = {
-            user: username,
-            x: Player.current.x,
-            y: Player.current.y,
+            x: x,
+            y: y,
         }
-
-        socketRef.current.emit("movement", movementData)
+        // console.log("3. emitting updated position:", x, y);
+        socketRef.current.emit("update-position", movementData)
     }
 
+    /**
+     * listens for key
+     */
     document.addEventListener("keydown", (event) => {
         switch (event.key) {
             case "a":
@@ -89,9 +100,12 @@ const GameEnv = () => {
                 playerMovement.down = true;
                 break;
             default:
-                break;
+                return;
         }
+        // console.log("1. keydown recognized: original", Player.current.x, Player.current.y)
+        updatePlayerMovement(Player.current.x, Player.current.y);
     });
+    
 
     document.addEventListener("keyup", (event) => {
         switch (event.key) {
@@ -108,13 +122,24 @@ const GameEnv = () => {
                 playerMovement.down = false;
                 break;
             default:
-                break;
+                return;
         }
     });
 
+    /**
+     * Canvas loop that updates player movement and game display
+     */
     function update() {
-        updatePlayerMovement();
-        console.log(Player.current.x, Player.current.y)
+        // console.log("5. updating client display with coordinates")
+        updateClientDisplay();
+    }
+
+    /**
+     * Updates client's immediate gameboard canvas
+     */
+    function updateClientDisplay() {
+        console.log("updating gameboard canvas")
+        // console.log("6. filling display with new position: new coord", Player.current.x, Player.current.y);
         ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
 
         // Draw the player
@@ -122,6 +147,7 @@ const GameEnv = () => {
         ctx.current.fillRect(Player.current.x, Player.current.y, Player.current.width, Player.current.height);
 
         // Request the next animation frame
+
         requestAnimationFrame(update);
     }
 
@@ -132,6 +158,7 @@ const GameEnv = () => {
             x: Player.current.x,
             y: Player.current.y,
         }
+        console.log(socketRef.current);
         socketRef.current.emit("join-game", initialPlayerInfo);
         const board = document.getElementById("gameboard");
         ctx.current = board.getContext("2d");
@@ -139,9 +166,15 @@ const GameEnv = () => {
         gameBoardX.current = boardDimensions.x;
         gameBoardY.current = boardDimensions.y;
         gameBoardCanvas.current = board;
-
         setBoardCoordinates({ x: gameBoardX.current, y: gameBoardY.current });
-        update()
+
+        socketRef.current.on("update-client-position", newCoordinate => {
+            // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
+            Player.current.x = newCoordinate.x;
+            Player.current.y = newCoordinate.y;
+        });
+
+        update();
     }, [])
     return (
         <>
