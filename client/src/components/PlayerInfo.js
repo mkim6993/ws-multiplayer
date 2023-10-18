@@ -10,7 +10,7 @@ const PlayerInfo = () => {
         // check for valid input
 
         try {
-            const response = await fetch('http://localhost:8000/playerInfo', {
+            const response = await fetch('http://192.168.4.126:8000/playerInfo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,21 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useParams } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
 
 const GameEnv = () => {
-    const socketRef = useRef(io("http://localhost:8000"));
+    const socketRef = useRef(io("http://192.168.4.126:8000/"));
     const { username } = useParams();
     const gameBoardCanvas = useRef();
     const gameBoardX = useRef();
     const gameBoardY = useRef();
     const ctx = useRef();
+    const animationFrameID = useRef(null);
 
+    /**
+     * other players in the game
+     * { socketID: { username, x, y, speed, width, height, color } }
+     */
     const OtherPlayers = useRef({});
 
     /**
-     * current client's character state
+     * current client's character state.
+     * { username, x, y, speed, width, height, color }
      */
     const PlayerCurrent = useRef();
 
@@ -146,7 +152,7 @@ const GameEnv = () => {
             ctx.current.fillStyle = player.playerColor;
             ctx.current.fillRect(player.x, player.y, player.width, player.height);
         })
-        
+
         // Request the next animation frame
         requestAnimationFrame(update);
     }
@@ -186,7 +192,7 @@ const GameEnv = () => {
         });
 
         // add new player to client's game state
-        socketRef.current.on("new-player-data", newPlayerData => {
+        socketRef.current.on("joining-player-data", newPlayerData => {
             OtherPlayers.current[newPlayerData.id] = new Player(
                 newPlayerData.username,
                 newPlayerData.x,
@@ -203,7 +209,7 @@ const GameEnv = () => {
          */
         socketRef.current.on("initial-other-players-data", otherPlayers => {
             otherPlayers.forEach((playerData) => {
-                OtherPlayers.current[otherPlayers[0]] = (new Player(
+                OtherPlayers.current[playerData[0]] = new Player(
                     playerData[4], 
                     playerData[1], 
                     playerData[2],
@@ -211,12 +217,37 @@ const GameEnv = () => {
                     10,
                     10,
                     playerData[3],
-                ));
-            })
+                );
+            });
         });
 
+        /**
+         * receive an update on another player's position.
+         * playerUpdates : { id, x, y }
+         */
+        socketRef.current.on("update-other-player-position", playerUpdates => {
+            // console.log("OtherPlayers:", OtherPlayers.current)
+            // console.log("OtherplayerID:", playerUpdates.id);
+            if (playerUpdates.id in OtherPlayers.current) {
+                OtherPlayers.current[playerUpdates.id].x = playerUpdates.x
+                OtherPlayers.current[playerUpdates.id].y = playerUpdates.y
+            }
+        });
+
+        /**
+         * receive notification for a disconnecting player,
+         */
+        socketRef.current.on("player-disconnected", id => {
+            delete OtherPlayers.current[id];
+        });
+
+        
         update();
-    }, [])
+        return () => {
+            
+            socketRef.current.disconnect();
+        };
+    }, []);
     return (
         <>
             <div id="GameEnvironment">
