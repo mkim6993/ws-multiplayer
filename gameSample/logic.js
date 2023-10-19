@@ -112,7 +112,7 @@ function update() {
 
   // Draw the player
   ctx.fillStyle = "red";
-  ctx.fillRect(player.x, player.y, 10, 10);
+  ctx.fillRect(player.x, player.y, 50, 50);
 
   // Request the next animation frame
   requestAnimationFrame(update);

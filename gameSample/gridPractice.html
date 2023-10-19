@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+      #gameboard {
+          background-color: rgb(225, 225, 225);
+          width: 80%;
+          height: 80%;
+          border: 2px solid gray;
+          display: grid;
+          grid-template-columns: repeat(100, 1fr);
+          grid-template-rows: repeat(50, 1fr);
+      }
+
+      .gridBox {
+        border: 0.3px solid black;
+        width: 100%;
+        height: 100%;
+      }
+
+      .blueSquare {
+        background-color: blue;
+        width: 100%;
+        height: 100%;
+      }
+
+      #GameEnvironment {
+          background-color: rgb(180, 170, 236);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          position: relative;
+      }
+    </style>
+</head>
+<body>
+    <div id="GameEnvironment">
+      <p>Hello MinSung</p>
+      <div id="gameboard">
+        <!-- Create grid items dynamically using JavaScript -->
+      </div>
+      <label for="x-coordinate">X Coordinate:</label>
+      <input type="number" id="x-coordinate" value="0">
+      <label for="y-coordinate">Y Coordinate:</label>
+      <input type="number" id="y-coordinate" value="0">
+      <button onclick="moveSquare()">Move Square</button>
+    </div>
+
+    <script>
+        // JavaScript code to dynamically create grid items
+        const gameboard = document.getElementById("gameboard");
+        for (let i = 0; i < 5000; i++) {
+            const gridItem = document.createElement("div");
+            gridItem.classList.add("gridBox");
+            gameboard.appendChild(gridItem);
+        }
+
+        function moveSquare() {
+            const x = parseInt(document.getElementById("x-coordinate").value);
+            const y = parseInt(document.getElementById("y-coordinate").value);
+            const square = document.createElement("div");
+            square.classList.add("blueSquare");
+            const grid = document.getElementById("gameboard");
+            grid.innerHTML = '';
+            for (let i = 0; i < 5000; i++) {
+                const gridItem = document.createElement("div");
+                gridItem.classList.add("gridBox");
+                grid.appendChild(gridItem);
+            }
+            grid.children[y * 100 + x].appendChild(square);
+        }
+    </script>
+</body>
+</html>
