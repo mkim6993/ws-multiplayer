@@ -11,7 +11,6 @@ const GameEnv = () => {
     const gameBoardX = useRef();
     const gameBoardY = useRef();
     const ctx = useRef();
-    const animationFrameID = useRef(null);
 
     /**
      * other players in the game
@@ -130,14 +129,6 @@ const GameEnv = () => {
     });
 
     /**
-     * Canvas loop that updates player movement and game display
-     */
-    function update() {
-        // console.log("5. updating client display with coordinates")
-        updateClientDisplay();
-    }
-
-    /**
      * Updates client's immediate gameboard canvas
      */
     function updateClientDisplay() {
@@ -152,9 +143,6 @@ const GameEnv = () => {
             ctx.current.fillStyle = player.playerColor;
             ctx.current.fillRect(player.x, player.y, player.width, player.height);
         })
-
-        // Request the next animation frame
-        requestAnimationFrame(update);
     }
 
 
@@ -189,6 +177,7 @@ const GameEnv = () => {
             // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
             PlayerCurrent.current.x = newCoordinate.x;
             PlayerCurrent.current.y = newCoordinate.y;
+            updateClientDisplay()
         });
 
         // add new player to client's game state
@@ -202,6 +191,7 @@ const GameEnv = () => {
                 10,
                 newPlayerData.color,
             );
+            updateClientDisplay()
         });
 
         /**
@@ -219,6 +209,7 @@ const GameEnv = () => {
                     playerData[3],
                 );
             });
+            updateClientDisplay()
         });
 
         /**
@@ -231,6 +222,7 @@ const GameEnv = () => {
             if (playerUpdates.id in OtherPlayers.current) {
                 OtherPlayers.current[playerUpdates.id].x = playerUpdates.x
                 OtherPlayers.current[playerUpdates.id].y = playerUpdates.y
+                updateClientDisplay()
             }
         });
 
@@ -239,10 +231,10 @@ const GameEnv = () => {
          */
         socketRef.current.on("player-disconnected", id => {
             delete OtherPlayers.current[id];
+            updateClientDisplay()
         });
 
-        
-        update();
+        updateClientDisplay()
         return () => {
             
             socketRef.current.disconnect();
