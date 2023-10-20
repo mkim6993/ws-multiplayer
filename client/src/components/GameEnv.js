@@ -7,7 +7,8 @@ import Player from "./classes/Player";
 const GameEnv = () => {
     const socketRef = useRef(io("http://192.168.4.126:8000/"));
     const { username } = useParams();
-    const gameBoardCanvas = useRef();
+    const gameboardGrid = useRef(null);
+    // const gameBoardCanvas = useRef();
     const gameBoardX = useRef();
     const gameBoardY = useRef();
     const ctx = useRef();
@@ -65,11 +66,11 @@ const GameEnv = () => {
             y += speed * 2;
         }
 
-        let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - PlayerCurrent.current.width, x));
-        let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - PlayerCurrent.current.height, y));
+        // let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - PlayerCurrent.current.width, x));
+        // let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - PlayerCurrent.current.height, y));
         
         // console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
-        sendMovementData(changeInX, changeInY)
+        // sendMovementData(changeInX, changeInY)
     }
 
     /**
@@ -134,7 +135,7 @@ const GameEnv = () => {
     function updateClientDisplay() {
         console.log("updating gameboard canvas")
         // console.log("6. filling display with new position: new coord", PlayerCurrent.current.x, PlayerCurrent.current.y);
-        ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
+        // // ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
         // Draw the client player
         ctx.current.fillStyle = PlayerCurrent.current.playerColor;
         ctx.current.fillRect(PlayerCurrent.current.x, PlayerCurrent.current.y, PlayerCurrent.current.width, PlayerCurrent.current.height);
@@ -147,6 +148,22 @@ const GameEnv = () => {
 
 
     useEffect(() => {
+        /**
+         * gameboard grid setup
+         */
+        const gameboard = gameboardGrid.current;
+        const gridItems = [];
+
+        for (let i = 0; i < 5000; i++) {
+            const gridItem = document.createElement("div");
+            gridItem.classList.add("gridBox");
+            gridItems.push(gridItem);
+            gameboard.appendChild(gridItem);
+        }
+
+        /**
+         * Place current player in random position, assign color, create Player obj
+         */
         let x = Math.floor(Math.random()*290);
         let y = Math.floor(Math.random()*140);
         let color = "#" + Math.floor(Math.random()*16777215).toString(16);
@@ -158,7 +175,11 @@ const GameEnv = () => {
             10, 
             10, 
             color
-        )
+        );
+
+        /**
+         * Send current player information to server
+         */
         const initialPlayerInfo = {
             username: username,
             x: x,
@@ -166,18 +187,18 @@ const GameEnv = () => {
             color: color
         }
         socketRef.current.emit("join-game", initialPlayerInfo);
-        const board = document.getElementById("gameboard");
-        ctx.current = board.getContext("2d");
-        const boardDimensions = board.getBoundingClientRect();
-        gameBoardX.current = boardDimensions.x;
-        gameBoardY.current = boardDimensions.y;
-        gameBoardCanvas.current = board;
+        // const board = document.getElementById("gameboard");
+        // ctx.current = board.getContext("2d");
+        // const boardDimensions = board.getBoundingClientRect();
+        // gameBoardX.current = boardDimensions.x;
+        // gameBoardY.current = boardDimensions.y;
+        // gameBoardCanvas.current = board;
 
         socketRef.current.on("update-client-position", newCoordinate => {
             // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
             PlayerCurrent.current.x = newCoordinate.x;
             PlayerCurrent.current.y = newCoordinate.y;
-            updateClientDisplay()
+            // updateClientDisplay()
         });
 
         // add new player to client's game state
@@ -191,7 +212,7 @@ const GameEnv = () => {
                 10,
                 newPlayerData.color,
             );
-            updateClientDisplay()
+            // updateClientDisplay()
         });
 
         /**
@@ -209,7 +230,7 @@ const GameEnv = () => {
                     playerData[3],
                 );
             });
-            updateClientDisplay()
+            // updateClientDisplay()
         });
 
         /**
@@ -222,7 +243,7 @@ const GameEnv = () => {
             if (playerUpdates.id in OtherPlayers.current) {
                 OtherPlayers.current[playerUpdates.id].x = playerUpdates.x
                 OtherPlayers.current[playerUpdates.id].y = playerUpdates.y
-                updateClientDisplay()
+                // updateClientDisplay()
             }
         });
 
@@ -231,10 +252,10 @@ const GameEnv = () => {
          */
         socketRef.current.on("player-disconnected", id => {
             delete OtherPlayers.current[id];
-            updateClientDisplay()
+            // updateClientDisplay()
         });
 
-        updateClientDisplay()
+        // updateClientDisplay()
         return () => {
             
             socketRef.current.disconnect();
@@ -244,7 +265,7 @@ const GameEnv = () => {
         <>
             <div id="GameEnvironment">
                 <p>Hello {username}!</p>
-                <canvas id="gameboard"></canvas>
+                <div ref={gameboardGrid} id="gameboard"></div>
             </div>
         </>
     )

@@ -13,9 +13,9 @@
       }
 
       .gridBox {
-        border: 0.3px solid black;
         width: 100%;
         height: 100%;
+        border: .2px solid black;
       }
 
       .blueSquare {
@@ -49,11 +49,14 @@
     </div>
 
     <script>
-        // JavaScript code to dynamically create grid items
         const gameboard = document.getElementById("gameboard");
+        const gridItems = [];
+
+        // JavaScript code to dynamically create grid items
         for (let i = 0; i < 5000; i++) {
             const gridItem = document.createElement("div");
             gridItem.classList.add("gridBox");
+            gridItems.push(gridItem);
             gameboard.appendChild(gridItem);
         }
 
@@ -62,14 +65,14 @@
             const y = parseInt(document.getElementById("y-coordinate").value);
             const square = document.createElement("div");
             square.classList.add("blueSquare");
-            const grid = document.getElementById("gameboard");
-            grid.innerHTML = '';
-            for (let i = 0; i < 5000; i++) {
-                const gridItem = document.createElement("div");
-                gridItem.classList.add("gridBox");
-                grid.appendChild(gridItem);
+
+            // Remove the previous blue square
+            const previousSquare = document.querySelector(".blueSquare");
+            if (previousSquare) {
+                previousSquare.remove();
             }
-            grid.children[y * 100 + x].appendChild(square);
+
+            gridItems[y * 100 + x].appendChild(square);
         }
     </script>
 </body>
