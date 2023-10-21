@@ -8,10 +8,11 @@ const GameEnv = () => {
     const socketRef = useRef(io("http://192.168.4.126:8000/"));
     const { username } = useParams();
     const gameboardGrid = useRef(null);
+    const gameBoardGridArray = useRef([]);
     // const gameBoardCanvas = useRef();
-    const gameBoardX = useRef();
-    const gameBoardY = useRef();
-    const ctx = useRef();
+    // const gameBoardX = useRef();
+    // const gameBoardY = useRef();
+    // const ctx = useRef();
 
     /**
      * other players in the game
@@ -66,11 +67,11 @@ const GameEnv = () => {
             y += speed * 2;
         }
 
-        // let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - PlayerCurrent.current.width, x));
-        // let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - PlayerCurrent.current.height, y));
+        let changeInX = Math.max(0, Math.min(99, x));
+        let changeInY = Math.max(0, Math.min(49, y));
         
         // console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
-        // sendMovementData(changeInX, changeInY)
+        sendMovementData(changeInX, changeInY)
     }
 
     /**
@@ -132,18 +133,33 @@ const GameEnv = () => {
     /**
      * Updates client's immediate gameboard canvas
      */
-    function updateClientDisplay() {
-        console.log("updating gameboard canvas")
-        // console.log("6. filling display with new position: new coord", PlayerCurrent.current.x, PlayerCurrent.current.y);
-        // // ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
-        // Draw the client player
-        ctx.current.fillStyle = PlayerCurrent.current.playerColor;
-        ctx.current.fillRect(PlayerCurrent.current.x, PlayerCurrent.current.y, PlayerCurrent.current.width, PlayerCurrent.current.height);
+    // function updateClientDisplay() {
+    //     console.log("updating gameboard canvas")
+    //     // console.log("6. filling display with new position: new coord", PlayerCurrent.current.x, PlayerCurrent.current.y);
+    //     // // ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
+    //     // Draw the client player
+    //     // ctx.current.fillStyle = PlayerCurrent.current.playerColor;
+    //     // ctx.current.fillRect(PlayerCurrent.current.x, PlayerCurrent.current.y, PlayerCurrent.current.width, PlayerCurrent.current.height);
 
-        Object.values(OtherPlayers.current).forEach((player) => {
-            ctx.current.fillStyle = player.playerColor;
-            ctx.current.fillRect(player.x, player.y, player.width, player.height);
-        })
+    //     // Object.values(OtherPlayers.current).forEach((player) => {
+    //     //     ctx.current.fillStyle = player.playerColor;
+    //     //     ctx.current.fillRect(player.x, player.y, player.width, player.height);
+    //     // })
+    // }
+
+    /**
+     * Remove player from previous location, insert player to new location
+     * @param {*} playerID 
+     * @param {*} prevX 
+     * @param {*} prevY 
+     * @param {*} newX 
+     * @param {*} newY 
+     */
+    function updatePlayerOnDisplay(x, y) {
+        // const currentPlayer = gameBoardGridArray.current[y * 100 + x];
+        // console.log("select grid in array");
+        // console.log(currentPlayer);
+        // currentPlayer.style.backgroundColor = PlayerCurrent.current.color;
     }
 
 
@@ -152,25 +168,29 @@ const GameEnv = () => {
          * gameboard grid setup
          */
         const gameboard = gameboardGrid.current;
-        const gridItems = [];
 
         for (let i = 0; i < 5000; i++) {
             const gridItem = document.createElement("div");
             gridItem.classList.add("gridBox");
-            gridItems.push(gridItem);
+            gameBoardGridArray.current.push(gridItem);
             gameboard.appendChild(gridItem);
         }
+        console.log("gridgameBoard");
+        console.log(gameboardGrid.current);
+
+        console.log("gridarray");
+        console.log(gameBoardGridArray.current);
 
         /**
          * Place current player in random position, assign color, create Player obj
          */
-        let x = Math.floor(Math.random()*290);
-        let y = Math.floor(Math.random()*140);
+        // let x = Math.floor(Math.random()*100);
+        // let y = Math.floor(Math.random()*50);
         let color = "#" + Math.floor(Math.random()*16777215).toString(16);
         PlayerCurrent.current = new Player(
             username,
-            x,
-            y, 
+            -1,
+            -1, 
             1, 
             10, 
             10, 
@@ -180,25 +200,20 @@ const GameEnv = () => {
         /**
          * Send current player information to server
          */
-        const initialPlayerInfo = {
-            username: username,
-            x: x,
-            y: y,
-            color: color
-        }
-        socketRef.current.emit("join-game", initialPlayerInfo);
+        socketRef.current.emit("join-game", { username, color });
         // const board = document.getElementById("gameboard");
         // ctx.current = board.getContext("2d");
         // const boardDimensions = board.getBoundingClientRect();
         // gameBoardX.current = boardDimensions.x;
         // gameBoardY.current = boardDimensions.y;
         // gameBoardCanvas.current = board;
+        
 
         socketRef.current.on("update-client-position", newCoordinate => {
             // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
             PlayerCurrent.current.x = newCoordinate.x;
             PlayerCurrent.current.y = newCoordinate.y;
-            // updateClientDisplay()
+            updatePlayerOnDisplay(newCoordinate.x, newCoordinate.y);
         });
 
         // add new player to client's game state
@@ -256,6 +271,7 @@ const GameEnv = () => {
         });
 
         // updateClientDisplay()
+        updatePlayerOnDisplay();
         return () => {
             
             socketRef.current.disconnect();
