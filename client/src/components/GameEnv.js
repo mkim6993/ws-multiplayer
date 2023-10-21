@@ -169,6 +169,13 @@ const GameEnv = () => {
          */
         const gameboard = gameboardGrid.current;
 
+        /**
+         * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         * 'appendChild' does not carry over well with react.
+         * React Virtual DOM handles efficient DOM manipulation.
+         * Direct DOM manipulation may cause complications.
+         * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         */
         for (let i = 0; i < 5000; i++) {
             const gridItem = document.createElement("div");
             gridItem.classList.add("gridBox");
