@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
+import Grid from './Grid';
 
 const GameEnv = () => {
     const socketRef = useRef(io("http://192.168.4.126:8000/"));
     const { username } = useParams();
-    const gameboardGrid = useRef(null);
-    const gameBoardGridArray = useRef([]);
+    // const gameboardGrid = useRef(null);
+    // const gameBoardGridArray = useRef([]);
     // const gameBoardCanvas = useRef();
     // const gameBoardX = useRef();
     // const gameBoardY = useRef();
@@ -167,7 +168,7 @@ const GameEnv = () => {
         /**
          * gameboard grid setup
          */
-        const gameboard = gameboardGrid.current;
+        // const gameboard = gameboardGrid.current;
 
         /**
          * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -176,17 +177,17 @@ const GameEnv = () => {
          * Direct DOM manipulation may cause complications.
          * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          */
-        for (let i = 0; i < 5000; i++) {
-            const gridItem = document.createElement("div");
-            gridItem.classList.add("gridBox");
-            gameBoardGridArray.current.push(gridItem);
-            gameboard.appendChild(gridItem);
-        }
-        console.log("gridgameBoard");
-        console.log(gameboardGrid.current);
+        // for (let i = 0; i < 5000; i++) {
+        //     const gridItem = document.createElement("div");
+        //     gridItem.classList.add("gridBox");
+        //     gameBoardGridArray.current.push(gridItem);
+        //     gameboard.appendChild(gridItem);
+        // }
+        // console.log("gridgameBoard");
+        // console.log(gameboardGrid.current);
 
-        console.log("gridarray");
-        console.log(gameBoardGridArray.current);
+        // console.log("gridarray");
+        // console.log(gameBoardGridArray.current);
 
         /**
          * Place current player in random position, assign color, create Player obj
@@ -284,11 +285,14 @@ const GameEnv = () => {
             socketRef.current.disconnect();
         };
     }, []);
+    
     return (
         <>
             <div id="GameEnvironment">
                 <p>Hello {username}!</p>
-                <div ref={gameboardGrid} id="gameboard"></div>
+                <div id="gameboard">
+                    <Grid/>
+                </div>
             </div>
         </>
     )
