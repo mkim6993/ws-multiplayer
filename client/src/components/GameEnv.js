@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
@@ -14,6 +14,20 @@ const GameEnv = () => {
     // const gameBoardX = useRef();
     // const gameBoardY = useRef();
     // const ctx = useRef();
+
+    /**
+     * Player in Grid data
+     */
+    const [allPlayers, setAllPlayers] = useState({ current: null, other: []});
+
+
+
+
+
+
+
+
+
 
     /**
      * other players in the game
@@ -38,7 +52,7 @@ const GameEnv = () => {
      * updates player movement values and sends coordinates to game state
      */
     function updatePlayerMovement(x, y) {
-        let speed = PlayerCurrent.current.speed;
+        let speed = allPlayers.current.speed;
         if (playerMovement.left && playerMovement.up) {
             x -= speed;
             y -= speed;
@@ -71,7 +85,7 @@ const GameEnv = () => {
         let changeInX = Math.max(0, Math.min(99, x));
         let changeInY = Math.max(0, Math.min(49, y));
         
-        // console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
+        console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
         sendMovementData(changeInX, changeInY)
     }
 
@@ -83,7 +97,7 @@ const GameEnv = () => {
             x: x,
             y: y,
         }
-        // console.log("3. emitting updated position:", x, y);
+        console.log("3. emitting updated position:", x, y);
         socketRef.current.emit("update-position", movementData)
     }
 
@@ -107,8 +121,9 @@ const GameEnv = () => {
             default:
                 return;
         }
-        // console.log("1. keydown recognized: original", PlayerCurrent.current.x, PlayerCurrent.current.y)
-        updatePlayerMovement(PlayerCurrent.current.x, PlayerCurrent.current.y);
+        console.log("1. keydown recognized: original")
+        console.log("reading for allplayers.current on keypress:", allPlayers.current)
+        updatePlayerMovement(allPlayers.current.x, allPlayers.current.y);
     });
     
 
@@ -163,8 +178,13 @@ const GameEnv = () => {
         // currentPlayer.style.backgroundColor = PlayerCurrent.current.color;
     }
 
+    function printPlayers() {
+        console.log(allPlayers);
+    }
+
 
     useEffect(() => {
+        console.log("GAMEENV IS BEING RERENDERED")
         /**
          * gameboard grid setup
          */
@@ -195,15 +215,27 @@ const GameEnv = () => {
         // let x = Math.floor(Math.random()*100);
         // let y = Math.floor(Math.random()*50);
         let color = "#" + Math.floor(Math.random()*16777215).toString(16);
-        PlayerCurrent.current = new Player(
-            username,
-            -1,
-            -1, 
-            1, 
-            10, 
-            10, 
-            color
-        );
+        // PlayerCurrent.current = new Player(
+        //     username,
+        //     -1,
+        //     -1, 
+        //     1, 
+        //     10, 
+        //     10, 
+        //     color
+        // );
+        setAllPlayers((prevState) => ({
+            ...prevState,
+            current: new Player(
+                username,
+                -1,
+                -1,
+                10,
+                10,
+                color
+            ),
+        }));
+        console.log("useeffect rendered, set allplayers rendered");
 
         /**
          * Send current player information to server
@@ -216,12 +248,24 @@ const GameEnv = () => {
         // gameBoardY.current = boardDimensions.y;
         // gameBoardCanvas.current = board;
         
+        
 
         socketRef.current.on("update-client-position", newCoordinate => {
+            console.log("update-client-position")
             // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
-            PlayerCurrent.current.x = newCoordinate.x;
-            PlayerCurrent.current.y = newCoordinate.y;
-            updatePlayerOnDisplay(newCoordinate.x, newCoordinate.y);
+            setAllPlayers((prevState) => ({
+                ...prevState,
+                current: {
+                    ...prevState.current,
+                    x: newCoordinate.x,
+                    y: newCoordinate.y,
+                }
+            }));
+            // PlayerCurrent.current.x = newCoordinate.x;
+            // PlayerCurrent.current.y = newCoordinate.y;
+            // updatePlayerOnDisplay(newCoordinate.x, newCoordinate.y);
+            console.log("All players are set: ");
+            console.log(allPlayers)
         });
 
         // add new player to client's game state
@@ -279,19 +323,19 @@ const GameEnv = () => {
         });
 
         // updateClientDisplay()
-        updatePlayerOnDisplay();
+        // updatePlayerOnDisplay();
         return () => {
-            
             socketRef.current.disconnect();
         };
     }, []);
-    
+
     return (
         <>
             <div id="GameEnvironment">
                 <p>Hello {username}!</p>
+                <button onClick={() => printPlayers()}>check all palyers</button>
                 <div id="gameboard">
-                    <Grid/>
+                    <Grid playersData={ allPlayers } />
                 </div>
             </div>
         </>
