@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
-import Grid from './Grid';
+import GridItem from './GridItem';
 
 const GameEnv = () => {
-    const socketRef = useRef(io("http://192.168.4.126:8000/"));
+    console.log("++++++++++++++++++++++ GAMEENV IS BEING RENDERED ++++++++++++++++++++++")
+
+    const socketRef = useRef();
     const { username } = useParams();
     // const gameboardGrid = useRef(null);
     // const gameBoardGridArray = useRef([]);
@@ -19,6 +21,8 @@ const GameEnv = () => {
      * Player in Grid data
      */
     const [allPlayers, setAllPlayers] = useState({ current: null, other: []});
+    const [test, setTest] = useState(Array(5000).fill(false));
+    const clientColor = useRef("white");
 
 
 
@@ -178,13 +182,23 @@ const GameEnv = () => {
         // currentPlayer.style.backgroundColor = PlayerCurrent.current.color;
     }
 
+    // ||||||||||||||||||||||||||| TESTING |||||||||||||||||||||||||||
+
     function printPlayers() {
+        console.log(socketRef.current.id);
         console.log(allPlayers);
     }
 
+    function calculateIndex(x, y) {
+        return y * 100 + x;
+    }
+
+    console.log("all players:", allPlayers)
+
 
     useEffect(() => {
-        console.log("GAMEENV IS BEING RERENDERED")
+        console.log("++++++++++++++++++++++ USEEFFECT IN GAMEENV ++++++++++++++++++++++");
+        socketRef.current = io("http://192.168.4.126:8000/");
         /**
          * gameboard grid setup
          */
@@ -215,6 +229,7 @@ const GameEnv = () => {
         // let x = Math.floor(Math.random()*100);
         // let y = Math.floor(Math.random()*50);
         let color = "#" + Math.floor(Math.random()*16777215).toString(16);
+        clientColor.current = color;
         // PlayerCurrent.current = new Player(
         //     username,
         //     -1,
@@ -230,12 +245,13 @@ const GameEnv = () => {
                 username,
                 -1,
                 -1,
+                1,
                 10,
                 10,
                 color
             ),
         }));
-        console.log("useeffect rendered, set allplayers rendered");
+        console.log("setting all players, need to rerender Grid");
 
         /**
          * Send current player information to server
@@ -247,6 +263,7 @@ const GameEnv = () => {
         // gameBoardX.current = boardDimensions.x;
         // gameBoardY.current = boardDimensions.y;
         // gameBoardCanvas.current = board;
+        console.log("all players:", allPlayers);
         
         
 
@@ -261,11 +278,18 @@ const GameEnv = () => {
                     y: newCoordinate.y,
                 }
             }));
+            const updatedGridState = [...test];
+            console.log("allaplyers.cuurent.color:", allPlayers);
+            if (allPlayers != null) {
+                console.log("allaplyers.cuurent.color not null:", allPlayers);
+                updatedGridState[calculateIndex(newCoordinate.x, newCoordinate.y)] = clientColor.current;
+                setTest(updatedGridState);
+            }
+
+            
             // PlayerCurrent.current.x = newCoordinate.x;
             // PlayerCurrent.current.y = newCoordinate.y;
             // updatePlayerOnDisplay(newCoordinate.x, newCoordinate.y);
-            console.log("All players are set: ");
-            console.log(allPlayers)
         });
 
         // add new player to client's game state
@@ -325,6 +349,8 @@ const GameEnv = () => {
         // updateClientDisplay()
         // updatePlayerOnDisplay();
         return () => {
+            console.log(socketRef.current.id);
+            console.log("SOCKET IN GAMEENV DISCONNECTING");
             socketRef.current.disconnect();
         };
     }, []);
@@ -335,7 +361,10 @@ const GameEnv = () => {
                 <p>Hello {username}!</p>
                 <button onClick={() => printPlayers()}>check all palyers</button>
                 <div id="gameboard">
-                    <Grid playersData={ allPlayers } />
+                    {/* <Grid playersData={ allPlayers } /> */}
+                    {test.map((cell, index) => (
+                        <GridItem key={index} color={cell ? cell : "white"} />
+                    ))}
                 </div>
             </div>
         </>

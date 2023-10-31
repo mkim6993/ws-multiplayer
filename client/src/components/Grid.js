@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import GridItem from "./GridItem";
 
 const Grid = ({ playersData}) => {
+    console.log("------------------------- GRID IS BEING RENDERED -------------------------")
 
     const [gridState, setGridState] = useState(Array(5000).fill(false));
 
@@ -10,7 +11,7 @@ const Grid = ({ playersData}) => {
     }
 
     useEffect(() => {
-        console.log("GRID IS BEING RERENDERED")
+        console.log("------------------------- USEEFFECT IN GRID -------------------------")
         const updatedGridState = [...gridState];
 
         const currentPlayer = playersData.current;
@@ -29,7 +30,6 @@ const Grid = ({ playersData}) => {
 
         setGridState(updatedGridState);
         
-        console.log(playersData)
     }, [playersData]);
 
     return (

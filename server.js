@@ -66,6 +66,8 @@ io.on("connection", socket => {
         let username = playerData.username;
         let x = Math.floor(Math.random()*100);
         let y = Math.floor(Math.random()*50);
+        // let x = Math.floor(Math.random()*10);
+        // let y = Math.floor(Math.random()*1);
         let color = playerData.color;
         let id = socket.id;
 
@@ -119,6 +121,7 @@ io.on("connection", socket => {
      * newCoordinate = { x, y }
      */
     socket.on("update-position", newCoordinate => {
+        console.log("update-position: new pos =", newCoordinate)
         // remove player from previous position on 'gameBoard'
         let id = socket.id;
         let prevX = players[id][0];
