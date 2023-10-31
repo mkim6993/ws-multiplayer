@@ -36,9 +36,9 @@ app.use(function(req, res, next) {
  * - record of players with their coordinates, color, username
  */
 const gameBoard = [];
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 141; i++) {
     const row = [];
-    for (let j = 0; j < 100; j++) {
+    for (let j = 0; j < 291; j++) {
         row.push("*");
     }
     gameBoard.push(row);
@@ -64,10 +64,8 @@ io.on("connection", socket => {
      */
     socket.on("join-game", playerData => {
         let username = playerData.username;
-        let x = Math.floor(Math.random()*100);
-        let y = Math.floor(Math.random()*50);
-        // let x = Math.floor(Math.random()*10);
-        // let y = Math.floor(Math.random()*1);
+        let x = playerData.x;
+        let y = playerData.y;
         let color = playerData.color;
         let id = socket.id;
 
@@ -113,15 +111,12 @@ io.on("connection", socket => {
             }
             socket.broadcast.emit("joining-player-data", newPlayerData);
         }
-        socket.emit("update-client-position", { x, y })
     });
 
     /**
      * Records a player's change in position to 'players' hashmap { socketID:[x, y, color, username] }
-     * newCoordinate = { x, y }
      */
     socket.on("update-position", newCoordinate => {
-        console.log("update-position: new pos =", newCoordinate)
         // remove player from previous position on 'gameBoard'
         let id = socket.id;
         let prevX = players[id][0];
