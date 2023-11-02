@@ -1,15 +1,22 @@
 #gameboard {
-    background-color: rgb(225, 225, 225);
+    background-color: rgb(223, 223, 223);
     width: 900px;
     height: 500px;
-    border: 2px solid gray;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+    border-radius: 15px 50px;
+    border: 2px solid rgb(58, 195, 54);
 }
 
 #GameEnvironment {
-    background-color: rgb(180, 170, 236);
+    background-color: rgb(14, 42, 98);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
+}
+
+#greeting-text {
+    color: aliceblue;
+    font-size: 25px;
 }

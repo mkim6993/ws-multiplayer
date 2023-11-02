@@ -148,10 +148,14 @@ io.on("connection", socket => {
         console.log("disconnecting player");
         console.log("players:", players);
         let id = socket.id;
-        let x = players[id][0];
-        let y = players[id][1];
-        gameBoard[y][x] = "*";
-        delete players[id];
+        console.log(socket.id);
+        if (id in players) {
+            let x = players[id][0];
+            let y = players[id][1];
+            gameBoard[y][x] = "*";
+            delete players[id];
+        }
+        
         console.log("updated player:", players);
 
         // notify clients of disconnection

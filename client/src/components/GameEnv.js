@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
@@ -65,6 +65,7 @@ const GameEnv = () => {
             y += speed * 2;
         }
 
+        // uses gameboard width and height to ensure player stays within gameboard bounds
         let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - PlayerCurrent.current.width, x));
         let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - PlayerCurrent.current.height, y));
         
@@ -85,7 +86,7 @@ const GameEnv = () => {
     }
 
     /**
-     * listens for key
+     * listens for keydown events and modifies player's directional movement state
      */
     document.addEventListener("keydown", (event) => {
         switch (event.key) {
@@ -108,7 +109,9 @@ const GameEnv = () => {
         updatePlayerMovement(PlayerCurrent.current.x, PlayerCurrent.current.y);
     });
     
-
+    /**
+     * listens for keyup events and resets player's directional movement state
+     */
     document.addEventListener("keyup", (event) => {
         switch (event.key) {
             case "a":
@@ -142,10 +145,15 @@ const GameEnv = () => {
         Object.values(OtherPlayers.current).forEach((player) => {
             ctx.current.fillStyle = player.playerColor;
             ctx.current.fillRect(player.x, player.y, player.width, player.height);
-        })
+        });
     }
 
 
+    /**
+     * |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+     * On Component Mount
+     * |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+     */
     useEffect(() => {
         let x = Math.floor(Math.random()*290);
         let y = Math.floor(Math.random()*140);
@@ -235,15 +243,18 @@ const GameEnv = () => {
         });
 
         updateClientDisplay()
+
+        /**
+         * clean up function after component is unmounted
+         */
         return () => {
-            
             socketRef.current.disconnect();
         };
     }, []);
     return (
         <>
             <div id="GameEnvironment">
-                <p>Hello {username}!</p>
+                <p id="greeting-text">Hello {username}!</p>
                 <canvas id="gameboard"></canvas>
             </div>
         </>
