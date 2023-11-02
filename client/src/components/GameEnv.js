@@ -1,16 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
 
 const GameEnv = () => {
     const socketRef = useRef(io("http://192.168.4.126:8000/"));
+    const navigate = useNavigate();
     const { username } = useParams();
+    const { state } = useLocation();
+    const { color } = state;
     const gameBoardCanvas = useRef();
     const gameBoardX = useRef();
     const gameBoardY = useRef();
     const ctx = useRef();
+
+    function navigateHome() {
+        navigate("/")
+    }
 
     /**
      * other players in the game
@@ -155,23 +162,19 @@ const GameEnv = () => {
      * |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
      */
     useEffect(() => {
-        let x = Math.floor(Math.random()*290);
-        let y = Math.floor(Math.random()*140);
-        let color = "#" + Math.floor(Math.random()*16777215).toString(16);
+        let playerColor = color;
         PlayerCurrent.current = new Player(
             username,
-            x,
-            y, 
+            -1,
+            -1, 
             1, 
             10, 
             10, 
-            color
+            playerColor
         )
         const initialPlayerInfo = {
             username: username,
-            x: x,
-            y: y,
-            color: color
+            color: playerColor
         }
         socketRef.current.emit("join-game", initialPlayerInfo);
         const board = document.getElementById("gameboard");
@@ -242,8 +245,6 @@ const GameEnv = () => {
             updateClientDisplay()
         });
 
-        updateClientDisplay()
-
         /**
          * clean up function after component is unmounted
          */
@@ -256,6 +257,7 @@ const GameEnv = () => {
             <div id="GameEnvironment">
                 <p id="greeting-text">Hello {username}!</p>
                 <canvas id="gameboard"></canvas>
+                <button onClick={() => navigateHome()}>back</button>
             </div>
         </>
     )

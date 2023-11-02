@@ -46,10 +46,27 @@ for (let i = 0; i < 141; i++) {
 }
 
 // *********************************************************
-const socketConnections = {};   // { socketID: username }
+// const socketConnections = {};   // { socketID: username }
 const players = {}  // { socketID: [x, y, color, username] }
 // *********************************************************
 
+function generateUniqueCoordinates() {
+    let x, y;
+    do {
+        x = Math.floor(Math.random() * 290);
+        y = Math.floor(Math.random() * 140);
+    } while (coordinateExists(x, y));
+    return [x, y];
+}
+
+function coordinateExists(x, y) {
+    for (const socketID in players) {
+        if (players[socketID][0] === x && players[socketID][1] === y) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * Socket.io event listeners
@@ -64,8 +81,9 @@ io.on("connection", socket => {
      */
     socket.on("join-game", playerData => {
         let username = playerData.username;
-        let x = playerData.x;
-        let y = playerData.y;
+        let coordinate = generateUniqueCoordinates();
+        let x = coordinate[0];
+        let y = coordinate[1];
         let color = playerData.color;
         let id = socket.id;
 
@@ -74,7 +92,7 @@ io.on("connection", socket => {
         // ---------------------------------
         
         // push joining player's data to 'players' record
-        socketConnections[id] = username;
+        // socketConnections[id] = username;
         players[id] = [x];
         players[id].push(y); 
         players[id].push(color);
@@ -83,7 +101,7 @@ io.on("connection", socket => {
 
         // ------------- DEBUG -------------
         console.log("players:", players)
-        console.log("socketConnections:", socketConnections)
+        // console.log("socketConnections:", socketConnections)
         // ---------------------------------
 
         /**
@@ -111,6 +129,7 @@ io.on("connection", socket => {
             }
             socket.broadcast.emit("joining-player-data", newPlayerData);
         }
+        socket.emit("update-client-position", { x, y });
     });
 
     /**
