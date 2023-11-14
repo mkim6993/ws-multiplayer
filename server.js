@@ -47,7 +47,6 @@ for (let i = 0; i < 141; i++) {
 }
 
 // *********************************************************
-// const socketConnections = {};   // { socketID: username }
 const players = {}  // { socketID: [x, y, color, username] }
 // *********************************************************
 
@@ -85,10 +84,6 @@ io.on("connection", socket => {
         let y = coordinate[1];
         let color = playerData.color;
         let id = socket.id;
-
-        // ------------- DEBUG -------------
-        // 
-        // ---------------------------------
         
         // push joining player's data to 'players' record
         // socketConnections[id] = username;
@@ -97,10 +92,6 @@ io.on("connection", socket => {
         players[id].push(color);
         players[id].push(username);
         gameBoard[y][x] = socket.id;
-
-        // ------------- DEBUG -------------
-        
-        // ---------------------------------
 
         /**
          * if multiple people are in the game...
