@@ -4,6 +4,7 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require("cors");
+require("dotenv").config();
 
 /**
  * Configure CORS policy by...
@@ -12,13 +13,13 @@ const cors = require("cors");
  */
 const io = new Server(server, {
     cors: {
-        origin: "http://192.168.4.126:3000"
+        origin: `http://${process.env.PRIVATE_IP}:${process.env.CLIENT_PORT}`,
     }
 })
 app.use(cors());
 app.use(express.json());
 app.use(function(req, res, next) {
-    const allowedOrigins = [`http://192.168.4.126:3000`];
+    const allowedOrigins = [`http://${process.env.PRIVATE_IP}:${process.env.CLIENT_PORT}`];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
@@ -72,8 +73,6 @@ function coordinateExists(x, y) {
  * Socket.io event listeners
  */
 io.on("connection", socket => {
-    console.log(`${socket.id} has connected`);
-
     /**
      * Once a client connects, they emit an initial "join-game" event
      * - save player's socketConnection in 'socketConnections'
@@ -88,7 +87,7 @@ io.on("connection", socket => {
         let id = socket.id;
 
         // ------------- DEBUG -------------
-        // console.log("x:", x, ", y:", y);
+        // 
         // ---------------------------------
         
         // push joining player's data to 'players' record
@@ -100,8 +99,7 @@ io.on("connection", socket => {
         gameBoard[y][x] = socket.id;
 
         // ------------- DEBUG -------------
-        console.log("players:", players)
-        // console.log("socketConnections:", socketConnections)
+        
         // ---------------------------------
 
         /**
@@ -146,7 +144,6 @@ io.on("connection", socket => {
         players[id][0] = newCoordinate.x;
         players[id][1] = newCoordinate.y;
         gameBoard[newCoordinate.y][newCoordinate.x] = id;
-        // console.log("new player position: [" + newCoordinate.x + ", " + newCoordinate.y + "]");
 
         // player's updated coordinate -> player's client
         socket.emit("update-client-position", newCoordinate);
@@ -164,18 +161,15 @@ io.on("connection", socket => {
 
     socket.on("disconnect", () => {
         // remove player from players record and gameboard
-        console.log("disconnecting player");
-        console.log("players:", players);
+        
         let id = socket.id;
-        console.log(socket.id);
+        
         if (id in players) {
             let x = players[id][0];
             let y = players[id][1];
             gameBoard[y][x] = "*";
             delete players[id];
         }
-        
-        console.log("updated player:", players);
 
         // notify clients of disconnection
         socket.broadcast.emit("player-disconnected", id);
@@ -187,8 +181,6 @@ app.post('/playerInfo', (req, res) => {
     res.sendStatus(200);
 })
 
-const PORT = 8000;
-// server.listen(PORT, () => {
-//     console.log(`Server is running on port ${ PORT }`);
-// })
-server.listen(8000, '192.168.4.126')
+server.listen(process.env.SERVER_PORT, process.env.PRIVATE_IP, () => {
+    console.log("server is listening");
+})

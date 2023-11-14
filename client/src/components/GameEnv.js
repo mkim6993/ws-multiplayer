@@ -4,8 +4,15 @@ import "./GameEnv.css";
 import { io } from "socket.io-client";
 import Player from "./classes/Player";
 
+/**
+ * Represents the game environment for the current client
+ * - emits socket events for current player's join, disconnect, and movement actions
+ * - receives socket events for other players' join, disconnect, and movement actions
+ * - keeps track of each player's state
+ * - reads current player's keydown and keyup events
+ */
 const GameEnv = () => {
-    const socketRef = useRef(io("http://192.168.4.126:8000/"));
+    const socketRef = useRef(io(`http://${process.env.REACT_APP_PRIVATE_IP}:${process.env.REACT_APP_SERVER_PORT}`));
     const navigate = useNavigate();
     const { username } = useParams();
     const { state } = useLocation();
@@ -14,10 +21,6 @@ const GameEnv = () => {
     const gameBoardX = useRef();
     const gameBoardY = useRef();
     const ctx = useRef();
-
-    function navigateHome() {
-        navigate("/")
-    }
 
     /**
      * other players in the game
@@ -38,8 +41,12 @@ const GameEnv = () => {
         down: false,
     }
 
+    function navigateHome() {
+        navigate("/")
+    }
+
     /**
-     * updates player movement values and sends coordinates to game state
+     * updates player movement values and sends coordinates to game state on server
      */
     function updatePlayerMovement(x, y) {
         let speed = PlayerCurrent.current.speed;
@@ -75,8 +82,6 @@ const GameEnv = () => {
         // uses gameboard width and height to ensure player stays within gameboard bounds
         let changeInX = Math.max(0, Math.min(gameBoardCanvas.current.width - PlayerCurrent.current.width, x));
         let changeInY = Math.max(0, Math.min(gameBoardCanvas.current.height - PlayerCurrent.current.height, y));
-        
-        // console.log("2. calculated new coordinate: new coordinate", changeInX, changeInY);
         sendMovementData(changeInX, changeInY)
     }
 
@@ -88,7 +93,6 @@ const GameEnv = () => {
             x: x,
             y: y,
         }
-        // console.log("3. emitting updated position:", x, y);
         socketRef.current.emit("update-position", movementData)
     }
 
@@ -112,7 +116,6 @@ const GameEnv = () => {
             default:
                 return;
         }
-        // console.log("1. keydown recognized: original", PlayerCurrent.current.x, PlayerCurrent.current.y)
         updatePlayerMovement(PlayerCurrent.current.x, PlayerCurrent.current.y);
     });
     
@@ -139,16 +142,14 @@ const GameEnv = () => {
     });
 
     /**
-     * Updates client's immediate gameboard canvas
+     * Updates client's immediate gameboard canvas display
      */
     function updateClientDisplay() {
-        console.log("updating gameboard canvas")
-        // console.log("6. filling display with new position: new coord", PlayerCurrent.current.x, PlayerCurrent.current.y);
         ctx.current.clearRect(0, 0, gameBoardCanvas.current.width, gameBoardCanvas.current.height);
         // Draw the client player
         ctx.current.fillStyle = PlayerCurrent.current.playerColor;
         ctx.current.fillRect(PlayerCurrent.current.x, PlayerCurrent.current.y, PlayerCurrent.current.width, PlayerCurrent.current.height);
-
+        // Draw the other players
         Object.values(OtherPlayers.current).forEach((player) => {
             ctx.current.fillStyle = player.playerColor;
             ctx.current.fillRect(player.x, player.y, player.width, player.height);
@@ -162,6 +163,12 @@ const GameEnv = () => {
      * |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
      */
     useEffect(() => {
+        /**
+         *  create player object
+         *  Player (
+         *      username, x, y, speed, width, height, playerColor
+         *  )
+         */ 
         let playerColor = color;
         PlayerCurrent.current = new Player(
             username,
@@ -177,6 +184,7 @@ const GameEnv = () => {
             color: playerColor
         }
         socketRef.current.emit("join-game", initialPlayerInfo);
+
         const board = document.getElementById("gameboard");
         ctx.current = board.getContext("2d");
         const boardDimensions = board.getBoundingClientRect();
@@ -184,14 +192,18 @@ const GameEnv = () => {
         gameBoardY.current = boardDimensions.y;
         gameBoardCanvas.current = board;
 
+        /**
+         * update the gameboard canvas with new coordinates for the current player
+         */
         socketRef.current.on("update-client-position", newCoordinate => {
-            // console.log("4. received updated coordinate from server, player coordinates set: received", newCoordinate.x, newCoordinate.y);
             PlayerCurrent.current.x = newCoordinate.x;
             PlayerCurrent.current.y = newCoordinate.y;
             updateClientDisplay()
         });
 
-        // add new player to client's game state
+        /**
+         * add new player to the current client's game state
+         */
         socketRef.current.on("joining-player-data", newPlayerData => {
             OtherPlayers.current[newPlayerData.id] = new Player(
                 newPlayerData.username,
@@ -206,7 +218,8 @@ const GameEnv = () => {
         });
 
         /**
-         * receive other player's data, otherPlayers = [socketID, username, x, y, color]
+         * When current player joins a non-empty game environment...
+         * receive all other player data, otherPlayers = [socketID, username, x, y, color]
          */
         socketRef.current.on("initial-other-players-data", otherPlayers => {
             otherPlayers.forEach((playerData) => {
@@ -228,8 +241,6 @@ const GameEnv = () => {
          * playerUpdates : { id, x, y }
          */
         socketRef.current.on("update-other-player-position", playerUpdates => {
-            // console.log("OtherPlayers:", OtherPlayers.current)
-            // console.log("OtherplayerID:", playerUpdates.id);
             if (playerUpdates.id in OtherPlayers.current) {
                 OtherPlayers.current[playerUpdates.id].x = playerUpdates.x
                 OtherPlayers.current[playerUpdates.id].y = playerUpdates.y
@@ -249,8 +260,10 @@ const GameEnv = () => {
          * clean up function after component is unmounted
          */
         return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             socketRef.current.disconnect();
         };
+        // eslint-disable-next-line
     }, []);
     return (
         <>
@@ -263,4 +276,4 @@ const GameEnv = () => {
     )
 }
 
-export default GameEnv
+export default GameEnv;

@@ -2,21 +2,28 @@ import React from 'react'
 import { useNavigate } from "react-router-dom";
 import "./PlayerInfo.css";
 
+/**
+ * Start screen 
+ * - validates form input
+ * - sends username and color to server to save Player data
+ */
 const PlayerInfo = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
+    /**
+     * form input validation
+     */
     const handlePlayerInfo = async(event) => {
         event.preventDefault();
-        console.log(event.target[1].value);
         const username = event.target[0].value;
 
-        // check for valid input
+        // check for valid alphanumeric only characters
         if (username.trim() === "" || /[^a-zA-Z0-9_]/.test(username)) {
-            // invalid
             alert("Invalid Username (only alphanumeric characters)");
         } else {
             try {
-                const response = await fetch('http://192.168.4.126:8000/playerInfo', {
+                console.log(`http://${process.env.REACT_APP_PRIVATE_IP}:${process.env.REACT_APP_SERVER_PORT}/playerInfo`);
+                const response = await fetch(`http://${process.env.REACT_APP_PRIVATE_IP}:${process.env.REACT_APP_SERVER_PORT}/playerInfo`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -27,7 +34,7 @@ const PlayerInfo = () => {
                 if (response.status === 200) {
                     navigate(`/play/${ username }`, { state: { color: event.target[1].value }});
                 } else {
-                    // handle invalid status return
+                    alert("Server error: Try again later.");
                 }
             } catch (error) {
                 console.log(error);
@@ -67,4 +74,4 @@ const PlayerInfo = () => {
     )
 }
 
-export default PlayerInfo
+export default PlayerInfo;
